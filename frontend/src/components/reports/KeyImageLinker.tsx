@@ -38,6 +38,8 @@ export default function KeyImageLinker({ studyId, onInsertLink }: KeyImageLinker
       const instance = instances[currentIndex];
 
       addKeyImageToReport({
+        id: `ki-${Date.now()}-${currentIndex}`,
+        reportId: currentReport?.id ?? '',
         instanceId: instance?.id ?? String(currentIndex),
         sopInstanceUid: instance?.sopInstanceUid ?? '',
         sliceIndex: currentIndex,

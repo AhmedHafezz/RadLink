@@ -170,12 +170,13 @@ export default function ReportEditor({ studyId, shareToken, readOnly = false }: 
       const dto = getDraftAsUpdateDto();
       if (currentReport?.id) {
         const updated = (await reportsApi.update(currentReport.id, dto)) as Report;
-        markSaved(updated);
+        setReport(updated);
+        markSaved();
       } else {
         // Create new report
         const created = (await reportsApi.create({ studyId, ...dto })) as Report;
-        markSaved(created);
         setReport(created);
+        markSaved();
       }
     } catch {
       setIsSaving(false);
@@ -201,7 +202,7 @@ export default function ReportEditor({ studyId, shareToken, readOnly = false }: 
         `${name} (License: ${license})`
       )) as Report;
       setReport(finalized);
-      markSaved(finalized);
+      markSaved();
       setShowFinalizeModal(false);
     } catch {
       alert('Failed to finalize report. Please try again.');

@@ -192,14 +192,12 @@ export default function AdminPage() {
   };
 
   const storagePercent =
-    storage && storage.usedGB !== undefined && storage.totalGB > 0
-      ? Math.min(100, Math.round((storage.usedGB / storage.totalGB) * 100))
-      : tenant && tenant.subscription
-      ? Math.min(100, Math.round(((storage as unknown as { used?: number })?.used ?? 0) / tenant.subscription.maxStorageGB * 100))
+    storage && storage.maxGB > 0
+      ? Math.min(100, Math.round((storage.usedGB / storage.maxGB) * 100))
       : 0;
 
-  const usedGB = (storage as unknown as { usedGB?: number })?.usedGB ?? 0;
-  const totalGB = tenant?.subscription?.maxStorageGB ?? 0;
+  const usedGB = storage?.usedGB ?? 0;
+  const totalGB = storage?.maxGB ?? tenant?.subscription?.maxStorageGB ?? 0;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">

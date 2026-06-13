@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Ruler, Angle, Circle, Trash2, X } from 'lucide-react';
+import { Ruler, Triangle, Circle, Trash2, X } from 'lucide-react';
 import { useViewerStore } from '@/store/viewerStore';
 import type { Measurement } from '@/store/viewerStore';
 
@@ -12,7 +12,7 @@ interface MeasurementToolsProps {
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   length: <Ruler className="w-3.5 h-3.5 text-blue-400" />,
-  angle: <Angle className="w-3.5 h-3.5 text-yellow-400" />,
+  angle: <Triangle className="w-3.5 h-3.5 text-yellow-400" />,
   area: <Circle className="w-3.5 h-3.5 text-green-400" />,
   annotation: <span className="text-xs">T</span>,
 };
