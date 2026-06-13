@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Required for Render.com standalone Docker deployment
+  output: 'standalone',
+
   // Enable experimental features needed for Cornerstone3D
   experimental: {
     // Needed for proper WASM support

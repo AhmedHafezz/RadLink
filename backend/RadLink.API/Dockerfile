@@ -13,6 +13,6 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
-EXPOSE 5000
-ENV ASPNETCORE_URLS=http://+:5000
-ENTRYPOINT ["dotnet", "RadLink.API.dll"]
+EXPOSE 10000
+# Use $PORT if set (Render.com injects this), fallback to 10000
+CMD sh -c "ASPNETCORE_URLS=http://+:${PORT:-10000} dotnet RadLink.API.dll"

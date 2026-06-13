@@ -21,12 +21,21 @@ builder.Services.AddDbContext<RadLinkDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsql => npgsql.EnableRetryOnFailure(3)));
 
-// ── Redis ─────────────────────────────────────────────────────────────────────
-var redisConn = builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379";
-builder.Services.AddSingleton<IConnectionMultiplexer>(
-    ConnectionMultiplexer.Connect(redisConn));
-builder.Services.AddStackExchangeRedisCache(opts => opts.Configuration = redisConn);
-builder.Services.AddScoped<ICacheService, RedisCacheService>();
+// ── Redis (optional — falls back to in-memory cache if not configured) ───────
+var redisConn = builder.Configuration["Redis:ConnectionString"];
+var hasRedis = !string.IsNullOrWhiteSpace(redisConn);
+if (hasRedis)
+{
+    builder.Services.AddSingleton<IConnectionMultiplexer>(
+        ConnectionMultiplexer.Connect(redisConn!));
+    builder.Services.AddStackExchangeRedisCache(opts => opts.Configuration = redisConn);
+    builder.Services.AddScoped<ICacheService, RedisCacheService>();
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+    builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+}
 
 // ── Application Services ──────────────────────────────────────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -127,20 +136,22 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ── Health Checks ─────────────────────────────────────────────────────────────
-builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!)
-    .AddRedis(redisConn);
+var healthChecks = builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
+if (hasRedis)
+    healthChecks.AddRedis(redisConn!);
 
 // ── Build & Pipeline ──────────────────────────────────────────────────────────
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RadLink API v1"));
-}
+// Swagger available in all environments (useful for Render preview)
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RadLink API v1"));
 
-app.UseHttpsRedirection();
+// Render handles TLS at the load balancer — skip HTTPS redirect in production
+if (!app.Environment.IsProduction())
+    app.UseHttpsRedirection();
+
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();

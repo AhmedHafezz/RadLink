@@ -1,0 +1,99 @@
+# Render.com Blueprint — RadLink Cloud PACS Platform
+# Deploy the full stack with one click:
+#   https://render.com/deploy
+#
+# After deploy, set these secrets in the Render dashboard:
+#   - radlink-backend → Jwt__SecretKey  (random 256-bit string)
+#   - radlink-backend → AWS__AccessKey  (your S3 / MinIO access key)
+#   - radlink-backend → AWS__SecretKey  (your S3 / MinIO secret key)
+#   - radlink-backend → Redis__ConnectionString (Upstash Redis URL)
+
+services:
+  # ── Frontend (Next.js) ──────────────────────────────────────────────────────
+  - type: web
+    name: radlink-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    region: frankfurt
+    plan: free
+    healthCheckPath: /
+    dockerBuildArgs:
+      NEXT_PUBLIC_API_URL: https://radlink-backend.onrender.com
+      NEXT_PUBLIC_APP_URL: https://radlink-frontend.onrender.com
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NEXT_PUBLIC_API_URL
+        value: https://radlink-backend.onrender.com
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://radlink-frontend.onrender.com
+
+  # ── Backend (.NET Core 8 API) ───────────────────────────────────────────────
+  - type: web
+    name: radlink-backend
+    runtime: docker
+    dockerfilePath: ./backend/RadLink.API/Dockerfile
+    dockerContext: ./backend
+    region: frankfurt
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # PostgreSQL (auto-filled from Render managed DB)
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: radlink-db
+          property: connectionString
+
+      # Redis — use Upstash free tier: https://upstash.com
+      # Format: redis://default:<password>@<host>:<port>
+      - key: Redis__ConnectionString
+        sync: false   # Set manually in dashboard
+
+      # JWT — generate a strong random key (32+ chars)
+      - key: Jwt__SecretKey
+        generateValue: true
+      - key: Jwt__Issuer
+        value: radlink-api
+      - key: Jwt__Audience
+        value: radlink-app
+      - key: Jwt__AccessTokenExpiryMinutes
+        value: "60"
+      - key: Jwt__RefreshTokenExpiryDays
+        value: "30"
+
+      # AWS S3 (or any S3-compatible storage like Cloudflare R2 / Backblaze B2)
+      - key: AWS__BucketName
+        value: radlink-dicom
+      - key: AWS__Region
+        value: eu-central-1
+      - key: AWS__AccessKey
+        sync: false   # Set manually in dashboard
+      - key: AWS__SecretKey
+        sync: false   # Set manually in dashboard
+      - key: AWS__ServiceUrl
+        value: https://s3.eu-central-1.amazonaws.com
+
+      # CORS — allow frontend origin
+      - key: AllowedOrigins__0
+        value: https://radlink-frontend.onrender.com
+
+      # Rate limiting
+      - key: RateLimit__PermitLimit
+        value: "200"
+      - key: RateLimit__WindowSeconds
+        value: "60"
+
+      # ASP.NET Core
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_LOGGING__LOGLEVEL__DEFAULT
+        value: Information
+
+# ── PostgreSQL Managed Database ─────────────────────────────────────────────
+databases:
+  - name: radlink-db
+    plan: free
+    databaseName: radlink
+    user: radlink_user
+    region: frankfurt
