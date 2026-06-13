@@ -31,9 +31,12 @@ public class AuthService : IAuthService
 
     public string GenerateJwt(User user, Tenant tenant)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+            _config["Jwt:SecretKey"] ?? _config["Jwt:Key"]
+            ?? throw new InvalidOperationException("Jwt:SecretKey is not configured.")));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiry = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:ExpiryMinutes"] ?? "60"));
+        var expiry = DateTime.UtcNow.AddMinutes(double.Parse(
+            _config["Jwt:ExpiryMinutes"] ?? _config["Jwt:AccessTokenExpiryMinutes"] ?? "60"));
 
         var claims = new[]
         {
@@ -44,7 +47,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim("first_name", user.FirstName ?? string.Empty),
             new Claim("last_name", user.LastName ?? string.Empty),
-            new Claim("license_number", user.LicenseNumber ?? string.Empty),
+            new Claim("license_number", string.Empty),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
