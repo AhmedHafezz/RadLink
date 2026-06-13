@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, Activity, Shield, Cloud, Cpu } from 'lucide-react';
-import apiClient from '@/lib/api';
+import { authApi } from '@/lib/api';
 
 const TENANT_SUGGESTIONS = [
   { subdomain: 'demo', name: 'RadLink Demo' },
@@ -26,12 +26,12 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      const res = await apiClient.post('/auth/login', {
+      const res = await authApi.login({
         email: form.email,
         password: form.password,
         subdomain: form.subdomain,
       });
-      const { accessToken, refreshToken, user, tenant } = res.data;
+      const { accessToken, refreshToken, user, tenant } = res;
       localStorage.setItem('radlink_token', accessToken);
       localStorage.setItem('radlink_refresh_token', refreshToken);
       localStorage.setItem('radlink_user', JSON.stringify(user));
