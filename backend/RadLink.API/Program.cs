@@ -9,6 +9,7 @@ using RadLink.API.Middleware;
 using RadLink.Application.Services;
 using RadLink.Infrastructure.Caching;
 using RadLink.Infrastructure.Data;
+using RadLink.Infrastructure.Services;
 using RadLink.Infrastructure.Storage;
 using StackExchange.Redis;
 

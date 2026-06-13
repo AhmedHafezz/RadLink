@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using RadLink.Application.Services;
 using RadLink.Domain.Entities;
 using RadLink.Infrastructure.Caching;
 using RadLink.Infrastructure.Data;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace RadLink.API.Controllers;
 
