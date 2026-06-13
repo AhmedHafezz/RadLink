@@ -144,6 +144,19 @@ if (hasRedis)
 // ── Build & Pipeline ──────────────────────────────────────────────────────────
 var app = builder.Build();
 
+// ── Auto-migrate database on startup (creates schema if not exists) ──────────
+try
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<RadLinkDbContext>();
+    await db.Database.EnsureCreatedAsync();
+    app.Logger.LogInformation("Database schema verified/created successfully.");
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Database initialization failed — continuing startup.");
+}
+
 // Swagger available in all environments (useful for Render preview)
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RadLink API v1"));
